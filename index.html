@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#1677ff" />
+  <meta name="color-scheme" content="light" />
+  <link rel="manifest" href="./manifest.json" />
+  <title>增肌/减脂追踪</title>
+
+  <!-- Ant Design CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@5.18.3/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@5.18.3/dist/antd.min.css">
+
+  <style>
+    /* ====== 强制亮色，反制浏览器自动暗黑 ====== */
+    :root { color-scheme: light; }
+    html, body { color-scheme: light; }
+
+    :root{
+      --bg:#f6f8fc;
+      --panel:#ffffff;
+      --text:#0b1220;
+      --text2: rgba(15,23,42,.72);
+      --line: rgba(0,0,0,.10);
+      --shadow: 0 16px 50px rgba(10, 35, 80, .10);
+      --r: 16px;
+      --r2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-text-size-adjust: 100%;
+    }
+    #root{min-height:100vh}
+
+    .glass{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+    }
+    .pageHeader{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .pageHeader h1{
+      margin:0;
+      font-weight:900;
+      font-size:22px;
+      line-height:1.15;
+      color: var(--text);
+    }
+    .pageHeader .sub{
+      margin-top:6px;
+      color: var(--text2);
+      font-size:13px;
+    }
+    .mono{font-family:var(--mono)}
+
+    canvas{
+      width:100%;
+      height:190px;
+      border-radius: var(--r2);
+      background: #fff;
+      border: 1px solid rgba(0,0,0,.10);
+      display:block;
+    }
+
+    /* ====== 兜底：强制 antd 控件亮色化，避免黑底黑字 ====== */
+    .ant-app,
+    .ant-layout,
+    .ant-card,
+    .ant-drawer-content,
+    .ant-modal-content {
+      background: #fff !important;
+      color: var(--text) !important;
+    }
+
+    .ant-input,
+    .ant-input-affix-wrapper,
+    .ant-input-number,
+    .ant-input-number-input,
+    .ant-input-number-affix-wrapper,
+    .ant-select-selector,
+    .ant-picker,
+    .ant-picker-input > input,
+    .ant-mentions,
+    textarea.ant-input {
+      background: #fff !important;
+      color: var(--text) !important;
+      border-color: rgba(0,0,0,.18) !important;
+      box-shadow: none !important;
+      -webkit-text-fill-color: var(--text) !important;
+    }
+
+    .ant-input::placeholder,
+    .ant-input-number-input::placeholder,
+    .ant-select-selection-placeholder,
+    .ant-picker-input > input::placeholder,
+    textarea.ant-input::placeholder {
+      color: rgba(15,23,42,.45) !important;
+      -webkit-text-fill-color: rgba(15,23,42,.45) !important;
+    }
+
+    .ant-select-dropdown,
+    .ant-picker-dropdown,
+    .ant-dropdown,
+    .ant-dropdown-menu,
+    .ant-tooltip-inner {
+      background: #fff !important;
+      color: var(--text) !important;
+      border: 1px solid rgba(0,0,0,.12) !important;
+    }
+    .ant-select-item,
+    .ant-picker-cell,
+    .ant-dropdown-menu-item {
+      color: var(--text) !important;
+    }
+
+    .ant-table,
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      background: #fff !important;
+      color: var(--text) !important;
+      border-color: rgba(0,0,0,.10) !important;
+    }
+    .ant-table-tbody > tr:hover > td{
+      background: rgba(22,119,255,.06) !important;
+    }
+
+    .ant-layout-sider{
+      background: rgba(255,255,255,.92) !important;
+      border-right: 1px solid rgba(0,0,0,.10) !important;
+      backdrop-filter: blur(10px);
+    }
+    .ant-menu{
+      background: transparent !important;
+    }
+    .ant-menu-item,
+    .ant-menu-submenu-title{
+      color: rgba(15,23,42,.82) !important;
+    }
+    .ant-menu-item-selected{
+      background: rgba(22,119,255,.10) !important;
+      color: #1677ff !important;
+      font-weight: 700;
+    }
+
+    .ant-card{
+      border: 1px solid rgba(0,0,0,.10) !important;
+      border-radius: var(--r) !important;
+      box-shadow: 0 10px 30px rgba(10,35,80,.10);
+      overflow:hidden;
+    }
+    .ant-card-head{
+      border-bottom: 1px solid rgba(0,0,0,.06) !important;
+      background: linear-gradient(180deg, rgba(0,0,0,.02), transparent);
+    }
+
+    .ant-drawer-header{
+      border-bottom: 1px solid rgba(0,0,0,.10) !important;
+      background: linear-gradient(180deg, rgba(0,0,0,.02), transparent);
+    }
+
+    .ant-message-notice-content{
+      background:#fff !important;
+      color:var(--text) !important;
+      border:1px solid rgba(0,0,0,.10) !important;
+    }
+
+    /* ===== Mobile responsive fixes ===== */
+    .mobileTopbar{
+      display:none;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(246,248,252,.92);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: 14px;
+      padding: 10px 10px;
+      margin-bottom: 12px;
+      align-items:center;
+      gap:10px;
+    }
+    .mobileMenuBtn{
+      font-size: 18px;
+      line-height: 1;
+      padding: 6px 10px;
+    }
+    .mobileTitle{
+      font-weight: 800;
+      color: rgba(11,18,32,.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.22);
+      z-index: 9;
+    }
+
+    @media (max-width: 992px){
+      .mobileTopbar{ display:flex; }
+
+      .ant-layout-sider{
+        position: fixed !important;
+        left: 0;
+        top: 0;
+        height: 100vh !important;
+        z-index: 10;
+        box-shadow: 0 18px 60px rgba(0,0,0,.18);
+      }
+      .ant-layout-content{
+        padding: 12px !important;
+      }
+    }
+
+    .ant-drawer{
+      z-index: 1000 !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- React (no build env) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
+
+  <!-- dayjs -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/dayjs.min.js"></script>
+
+  <!-- Ant Design UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/antd@5.18.3/dist/antd.min.js"></script>
+
+  <script>
+    (function(){
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(()=>{});
+        });
+      }
+    })();
+  </script>
+
+  <script type="text/babel">
+    const {useEffect, useMemo, useRef, useState} = React;
+    const {
+      ConfigProvider, theme,
+      Layout, Menu, Card, Form, Input, InputNumber, DatePicker, Select,
+      Checkbox, Button, Drawer, Table, Tag, Statistic, Space, Typography, message, Divider
+    } = antd;
+
+    const {Sider, Content} = Layout;
+    const {Title, Text} = Typography;
+
+    const LS_KEY = "fit_pwa_light_force_v3";
+    const todayISO = () => new Date().toISOString().slice(0,10);
+
+    function loadStore(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return { phase:"cut", daily:{}, workouts:[], sentinels:{primary:"bench", secondary:"incline"} };
+        const obj = JSON.parse(raw);
+        return {
+          phase: obj.phase || "cut",
+          daily: obj.daily || {},
+          workouts: Array.isArray(obj.workouts) ? obj.workouts : [],
+          sentinels: obj.sentinels || {primary:"bench", secondary:"incline"},
+        };
+      }catch{
+        return { phase:"cut", daily:{}, workouts:[], sentinels:{primary:"bench", secondary:"incline"} };
+      }
+    }
+    function saveStore(s){ localStorage.setItem(LS_KEY, JSON.stringify(s)); }
+
+    const round = (n,d=2)=> (Number.isFinite(n) ? Number(n.toFixed(d)) : null);
+    function mean(nums){
+      const a = nums.filter(v=>Number.isFinite(v));
+      if(!a.length) return null;
+      return a.reduce((s,x)=>s+x,0)/a.length;
+    }
+    function std(nums){
+      const a = nums.filter(v=>Number.isFinite(v));
+      if(a.length<2) return null;
+      const m = mean(a);
+      const v = a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1);
+      return Math.sqrt(v);
+    }
+    function daysBackISO(n){
+      const d = new Date();
+      d.setDate(d.getDate()-n);
+      return d.toISOString().slice(0,10);
+    }
+    function listDays(endISO, count){
+      const end = new Date(endISO+"T00:00:00");
+      const out=[];
+      for(let i=count-1;i>=0;i--){
+        const d=new Date(end);
+        d.setDate(d.getDate()-i);
+        out.push(d.toISOString().slice(0,10));
+      }
+      return out;
+    }
+    function phaseTargetsKgPerWeek(phase, bodyWeight){
+      const w = Math.max(40, bodyWeight || 66);
+      if(phase==="cut") return {lo: -(0.75/100)*w, hi: -(0.50/100)*w, fast: -(1.0/100)*w};
+      if(phase==="bulk") return {lo: (0.25/100)*w, hi: (0.50/100)*w, fast: (0.60/100)*w};
+      return {lo: -(0.15/100)*w, hi: (0.15/100)*w, fast: null};
+    }
+    function verdictLabel(phase, weeklyRate, targets){
+      if(!Number.isFinite(weeklyRate) || !targets) return {text:"数据不足", color:"gold"};
+      if(phase==="cut"){
+        if(weeklyRate <= targets.fast) return {text:"偏快（注意恢复）", color:"gold"};
+        if(weeklyRate >= -0.15) return {text:"可能偏慢（至少看满2周）", color:"red"};
+        if(weeklyRate <= targets.lo && weeklyRate >= targets.hi) return {text:"在目标区间", color:"green"};
+        if(weeklyRate < targets.lo) return {text:"略快", color:"gold"};
+        if(weeklyRate > targets.hi) return {text:"略慢", color:"gold"};
+      }
+      if(phase==="bulk"){
+        if(weeklyRate > targets.fast) return {text:"偏快（脂肪占比可能↑）", color:"gold"};
+        if(weeklyRate < 0.10) return {text:"可能偏慢（盈余不足）", color:"red"};
+        if(weeklyRate >= targets.lo && weeklyRate <= targets.hi) return {text:"在目标区间", color:"green"};
+        if(weeklyRate < targets.lo) return {text:"略慢", color:"gold"};
+        if(weeklyRate > targets.hi) return {text:"略快", color:"gold"};
+      }
+      if(Math.abs(weeklyRate) <= Math.abs(targets.hi)) return {text:"维持稳定", color:"green"};
+      return {text:"波动偏大", color:"gold"};
+    }
+    function confidenceFromSD(sd7){
+      if(!Number.isFinite(sd7)) return {text:"不足", color:"gold"};
+      if(sd7 < 0.6) return {text:"高", color:"green"};
+      if(sd7 < 1.2) return {text:"中", color:"gold"};
+      return {text:"低", color:"red"};
+    }
+
+    const EXERCISES = {
+      bench: "卧推", incline: "上斜推", row: "划船", deadlift: "硬拉", squat: "深蹲",
+      fly: "飞鸟/夹胸", lateral: "侧平举", curl: "弯举",
+    };
+    function parseRepsSeq(s){
+      if(!s) return [];
+      return String(s).split(/[/, ]+/).map(x=>parseInt(x,10)).filter(n=>Number.isFinite(n) && n>0);
+    }
+    function calcWorkoutMetrics(w){
+      const reps = w.reps || [];
+      const totalReps = reps.reduce((a,b)=>a+b,0);
+      const tonnage = (w.weight||0) * totalReps;
+      const maxSet = reps.length ? Math.max(...reps) : null;
+      const lastSet = reps.length ? reps[reps.length-1] : null;
+      const dropoff = (maxSet && lastSet) ? (maxSet-lastSet)/maxSet : null;
+      return {totalReps, tonnage, dropoff};
+    }
+
+    function App(){
+      const [store, setStore] = useState(loadStore());
+      const persist = (next) => { setStore(next); saveStore(next); };
+
+      const getRoute = () => (location.hash || "#/today").replace("#/","");
+      const [route, setRoute] = useState(getRoute());
+      useEffect(()=>{
+        const onHash = ()=> setRoute(getRoute());
+        window.addEventListener("hashchange", onHash);
+        return ()=> window.removeEventListener("hashchange", onHash);
+      }, []);
+
+      // Mobile sider control
+      // Mobile/desktop detection
+      const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+      const [mobileCollapsed, setMobileCollapsed] = useState(window.innerWidth < 992);
+
+      useEffect(()=>{
+        const onResize = ()=>{
+          const m = window.innerWidth < 992;
+          setIsMobile(m);
+          // ✅ 进入移动端：默认折叠；进入桌面端：强制展开
+          setMobileCollapsed(m ? true : false);
+        };
+        onResize();
+        window.addEventListener("resize", onResize);
+        return ()=> window.removeEventListener("resize", onResize);
+      }, []);
+
+
+      const weightsByDate = useMemo(()=>{
+        const out = {};
+        for(const [k,v] of Object.entries(store.daily)){
+          if(v && Number.isFinite(v.weight_kg)) out[k] = v.weight_kg;
+        }
+        return out;
+      }, [store.daily]);
+
+      const stats = useMemo(()=>{
+        const end = todayISO();
+        const last7Days = listDays(end, 7);
+        const last14Days = listDays(end, 14);
+        const prev14Days = listDays(daysBackISO(14), 14);
+
+        const w7 = last7Days.map(d=>weightsByDate[d]).filter(Number.isFinite);
+        const w14 = last14Days.map(d=>weightsByDate[d]).filter(Number.isFinite);
+        const w14prev = prev14Days.map(d=>weightsByDate[d]).filter(Number.isFinite);
+
+        const avg7 = mean(w7);
+        const avg14 = mean(w14);
+        const avg14prev = mean(w14prev);
+
+        const sd7 = std(w7);
+        const delta14 = (Number.isFinite(avg14) && Number.isFinite(avg14prev)) ? (avg14 - avg14prev) : null;
+        const weeklyRate = (Number.isFinite(delta14)) ? (delta14/2) : null;
+
+        const bodyW = Number.isFinite(avg7) ? avg7 : (Number.isFinite(avg14) ? avg14 : 66);
+        const targets = phaseTargetsKgPerWeek(store.phase, bodyW);
+        const verdict = verdictLabel(store.phase, weeklyRate, targets);
+        const conf = confidenceFromSD(sd7);
+
+        return {avg7, avg14, avg14prev, sd7, delta14, weeklyRate, bodyW, targets, verdict, conf};
+      }, [weightsByDate, store.phase]);
+
+      const [activeDate, setActiveDate] = useState(todayISO());
+      const [form] = Form.useForm();
+
+      useEffect(()=>{
+        const e = store.daily[activeDate] || {};
+        form.setFieldsValue({
+          date: dayjs(activeDate),
+          phase: store.phase,
+          weight_kg: Number.isFinite(e.weight_kg) ? e.weight_kg : null,
+          sleep_hours: Number.isFinite(e.sleep_hours) ? e.sleep_hours : null,
+          recovery_score: Number.isFinite(e.recovery_score) ? e.recovery_score : null,
+          trained: !!e.trained,
+          knobs: Array.isArray(e.knobs) ? e.knobs : [],
+          notes: e.notes || "",
+        });
+      }, [activeDate]);
+
+      const knobOptions = useMemo(()=>{
+        if(store.phase==="cut"){
+          return ["主食减半","无零食","少油少酱","无含热量饮料","步数/爬坡达标","蛋白补丁（乳清/蛋）"];
+        }
+        if(store.phase==="bulk"){
+          return ["固定加餐模块","主食+半碗","蛋白补丁（乳清/蛋）","睡眠≥8h","训练后碳水","少外食酒精"];
+        }
+        return ["维持份量","蛋白底线","睡眠≥8h","步数稳定","训练不加码"];
+      }, [store.phase]);
+
+      const onPhaseChange = (p)=>{
+        persist({...store, phase:p});
+        form.setFieldValue("phase", p);
+      };
+
+      const saveDaily = async ()=>{
+        const v = await form.validateFields();
+        const iso = v.date.format("YYYY-MM-DD");
+        const newEntry = {
+          weight_kg: Number.isFinite(v.weight_kg) ? round(v.weight_kg,2) : null,
+          sleep_hours: Number.isFinite(v.sleep_hours) ? round(v.sleep_hours,1) : null,
+          recovery_score: Number.isFinite(v.recovery_score) ? v.recovery_score : null,
+          trained: !!v.trained,
+          knobs: Array.isArray(v.knobs) ? v.knobs : [],
+          notes: v.notes || "",
+        };
+        persist({...store, daily:{...store.daily, [iso]: newEntry}});
+        message.success("已保存");
+      };
+
+      // Global workout drawer
+      const [drawerOpen, setDrawerOpen] = useState(false);
+      const [wForm] = Form.useForm();
+
+      useEffect(()=>{
+        if(!drawerOpen) return;
+        wForm.setFieldsValue({
+          date: dayjs(todayISO()),
+          ex: store.sentinels?.primary || "bench",
+          weight: null,
+          reps: "",
+          rir: null,
+          rest: null
+        });
+      }, [drawerOpen]);
+
+      const addWorkout = async ()=>{
+        const v = await wForm.validateFields();
+        const reps = parseRepsSeq(v.reps);
+        if(!reps.length) { message.error("次数序列不合法（如 10/9/8/8）"); return; }
+        const id = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+        const item = {
+          id,
+          date: v.date.format("YYYY-MM-DD"),
+          ex: v.ex,
+          weight: round(v.weight,2),
+          reps,
+          rir: Number.isFinite(v.rir) ? v.rir : null,
+          rest_min: Number.isFinite(v.rest) ? round(v.rest,1) : null
+        };
+        persist({...store, workouts:[item, ...store.workouts]});
+        message.success("训练已添加");
+        wForm.resetFields(["weight","reps","rir","rest"]);
+      };
+
+      const workoutsSorted = useMemo(()=>(
+        [...store.workouts].sort((a,b)=> (b.date||"").localeCompare(a.date||""))
+      ), [store.workouts]);
+
+      const removeWorkout = (id)=>{
+        if(!confirm("删除这条训练记录？")) return;
+        persist({...store, workouts: store.workouts.filter(x=>x.id!==id)});
+      };
+
+      const canvasRef = useRef(null);
+      useEffect(()=>{
+        const c = canvasRef.current;
+        if(!c) return;
+        const ctx = c.getContext("2d");
+        const dpr = window.devicePixelRatio || 1;
+        const w = c.clientWidth, h = c.clientHeight;
+        c.width = Math.floor(w*dpr);
+        c.height = Math.floor(h*dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        ctx.clearRect(0,0,w,h);
+        ctx.strokeStyle = "rgba(15,23,42,.12)";
+        ctx.lineWidth = 1;
+        for(let i=1;i<5;i++){
+          const y = (h/5)*i;
+          ctx.beginPath(); ctx.moveTo(12,y); ctx.lineTo(w-12,y); ctx.stroke();
+        }
+
+        const days = listDays(todayISO(), 30);
+        const raw = days.map(d=>weightsByDate[d]).map(v=>Number.isFinite(v)?v:null);
+        const avg7series = days.map((d,idx)=>{
+          const windowDays = days.slice(Math.max(0, idx-6), idx+1);
+          const windowVals = windowDays.map(dd=>weightsByDate[dd]).filter(Number.isFinite);
+          return mean(windowVals);
+        });
+
+        const allVals = [...raw.filter(Number.isFinite), ...avg7series.filter(Number.isFinite)];
+        if(allVals.length < 2){
+          ctx.fillStyle="rgba(15,23,42,.65)";
+          ctx.fillText("体重数据不足（先记录几天晨重）", 16, 26);
+          return;
+        }
+        const minV = Math.min(...allVals), maxV = Math.max(...allVals);
+        const pad = Math.max(0.6, (maxV-minV)*0.18);
+        const lo = minV - pad, hi = maxV + pad;
+
+        const xAt = (i)=> 12 + (w-24) * (i/(days.length-1));
+        const yAt = (v)=> 12 + (h-24) * (1 - ((v-lo)/(hi-lo)));
+
+        ctx.strokeStyle="rgba(22,119,255,.95)";
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        let started=false;
+        avg7series.forEach((v,i)=>{
+          if(!Number.isFinite(v)) return;
+          const x=xAt(i), y=yAt(v);
+          if(!started){ ctx.moveTo(x,y); started=true; }
+          else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle="rgba(15,23,42,.55)";
+        raw.forEach((v,i)=>{
+          if(!Number.isFinite(v)) return;
+          const x=xAt(i), y=yAt(v);
+          ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
+        });
+
+        ctx.fillStyle="rgba(15,23,42,.55)";
+        ctx.fillText("30天体重点（灰） + 7日均线（蓝）", 14, h-12);
+      }, [weightsByDate]);
+
+      const exportJSON = ()=>{
+        const blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "fit-tracker-export.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      const importJSON = (file)=>{
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          try{
+            const obj = JSON.parse(reader.result);
+            const merged = {
+              phase: obj.phase || "cut",
+              daily: obj.daily || {},
+              workouts: Array.isArray(obj.workouts) ? obj.workouts : [],
+              sentinels: obj.sentinels || {primary:"bench", secondary:"incline"}
+            };
+            persist(merged);
+            message.success("导入成功");
+          }catch{
+            message.error("导入失败：不是合法 JSON");
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      function TodayPage(){
+        return (
+          <Space direction="vertical" size={14} style={{width:"100%"}}>
+            <Card
+              title={<b>今天 · 快速记录</b>}
+              extra={
+                <Space>
+                  <Button onClick={()=>setDrawerOpen(true)}>+ 训练记录</Button>
+                  <Button type="primary" onClick={saveDaily}>保存</Button>
+                </Space>
+              }
+              className="glass"
+            >
+              <Form form={form} layout="vertical">
+                <Space wrap size={12} style={{width:"100%"}}>
+                  <Form.Item label="日期" name="date" style={{minWidth:220}}>
+                    <DatePicker
+                      style={{width:"100%"}}
+                      onChange={(d)=>{ if(d) setActiveDate(d.format("YYYY-MM-DD")); }}
+                      allowClear={false}
+                    />
+                  </Form.Item>
+
+                  <Form.Item label="阶段" name="phase" style={{minWidth:220}}>
+                    <Select
+                      options={[
+                        {value:"cut", label:"减脂"},
+                        {value:"bulk", label:"增肌"},
+                        {value:"maintain", label:"维持"},
+                      ]}
+                      onChange={onPhaseChange}
+                    />
+                  </Form.Item>
+                </Space>
+
+                <Space wrap size={12} style={{width:"100%"}}>
+                  <Form.Item label="晨间体重（kg）" name="weight_kg" style={{minWidth:220}}>
+                    <InputNumber style={{width:"100%"}} min={30} max={200} step={0.1} placeholder="例如 65.8" />
+                  </Form.Item>
+                  <Form.Item label="睡眠（小时，可选）" name="sleep_hours" style={{minWidth:220}}>
+                    <InputNumber style={{width:"100%"}} min={0} max={16} step={0.1} placeholder="例如 8.5" />
+                  </Form.Item>
+                  <Form.Item label="恢复评分（1-5，可选）" name="recovery_score" style={{minWidth:220}}>
+                    <Select allowClear placeholder="选择" options={[1,2,3,4,5].map(x=>({value:x,label:`${x}`}))} />
+                  </Form.Item>
+                </Space>
+
+                <Form.Item name="trained" valuePropName="checked">
+                  <Checkbox>今天训练</Checkbox>
+                </Form.Item>
+
+                <Divider />
+
+                <Form.Item label="今日旋钮（多选）" name="knobs">
+                  <Select
+                    mode="multiple"
+                    placeholder="选择你今天执行了哪些可控输入"
+                    options={knobOptions.map(k=>({value:k,label:k}))}
+                  />
+                </Form.Item>
+
+                <Form.Item label="备注（可选）" name="notes">
+                  <Input.TextArea placeholder="外食、盐/碳水波动、训练状态等" autoSize={{minRows:3, maxRows:8}} />
+                </Form.Item>
+
+                <Space>
+                  <Button onClick={()=>{
+                    const t = todayISO();
+                    setActiveDate(t);
+                    form.setFieldValue("date", dayjs(t));
+                  }}>跳到今天</Button>
+                  <Button type="primary" onClick={saveDaily}>保存</Button>
+                </Space>
+              </Form>
+            </Card>
+
+            <Card title={<b>本周结论（自动）</b>} className="glass">
+              <Space wrap size={16} style={{width:"100%"}}>
+                <Statistic title="7日均重" value={stats.avg7==null ? "—" : round(stats.avg7,2)} suffix={stats.avg7==null?"":"kg"} />
+                <Statistic title="两周速度" value={stats.weeklyRate==null ? "—" : round(stats.weeklyRate,2)} suffix={stats.weeklyRate==null?"":"kg/周"} />
+                <Statistic title="目标区间（估算）" value={`${round(stats.targets.lo,2)} ~ ${round(stats.targets.hi,2)}`} />
+                <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                  <Text>趋势可信度：<Tag color={stats.conf.color}>{stats.conf.text}</Tag></Text>
+                  <Text>结论：<Tag color={stats.verdict.color}>{stats.verdict.text}</Tag></Text>
+                </div>
+              </Space>
+
+              <div style={{marginTop:12}}>
+                <canvas ref={canvasRef}></canvas>
+              </div>
+            </Card>
+          </Space>
+        );
+      }
+
+      function WorkoutsPage(){
+        const data = workoutsSorted.slice(0, 80).map(w=>{
+          const m = calcWorkoutMetrics(w);
+          const drop = Number.isFinite(m.dropoff) ? round(m.dropoff*100,1) : null;
+          return {
+            key: w.id,
+            date: w.date,
+            ex: EXERCISES[w.ex] || w.ex,
+            weight: w.weight,
+            reps: (w.reps||[]).join("/"),
+            total: m.totalReps,
+            tonnage: round(m.tonnage,0),
+            drop: drop,
+            action: w.id
+          };
+        });
+
+        const columns = [
+          {title:"日期", dataIndex:"date", width:120},
+          {title:"动作", dataIndex:"ex", width:140},
+          {title:"重量(kg)", dataIndex:"weight", width:110},
+          {title:"次数", dataIndex:"reps", width:160},
+          {title:"总次数", dataIndex:"total", width:100, responsive:["md"]},
+          {title:"吨位", dataIndex:"tonnage", width:110, responsive:["lg"]},
+          {title:"掉幅", dataIndex:"drop", width:110, responsive:["lg"], render:(v)=> v==null?"—":`${v}%`},
+          {title:"操作", dataIndex:"action", width:110, render:(id)=>(
+            <Button danger size="small" onClick={()=>removeWorkout(id)}>删除</Button>
+          )}
+        ];
+
+        return (
+          <Space direction="vertical" size={14} style={{width:"100%"}}>
+            <Card
+              title={<b>训练（哨兵动作）</b>}
+              extra={<Button type="primary" onClick={()=>setDrawerOpen(true)}>+ 添加</Button>}
+              className="glass"
+            >
+              <Text type="secondary">
+                只记录关键动作：总次数/吨位/掉幅。掉幅 ≤15% 通常更稳定；＞25% 常见疲劳稀释或节奏不稳。
+              </Text>
+              <div style={{marginTop:12}}>
+                <Table
+                  columns={columns}
+                  dataSource={data}
+                  pagination={{pageSize:8}}
+                  size="small"
+                  scroll={{ x: "max-content" }}
+                />
+              </div>
+            </Card>
+          </Space>
+        );
+      }
+
+      function TrendsPage(){
+        return (
+          <Space direction="vertical" size={14} style={{width:"100%"}}>
+            <Card title={<b>趋势</b>} className="glass">
+              <Space wrap size={16}>
+                <Statistic title="14日均重" value={stats.avg14==null ? "—" : round(stats.avg14,2)} suffix={stats.avg14==null?"":"kg"} />
+                <Statistic title="前14日均重" value={stats.avg14prev==null ? "—" : round(stats.avg14prev,2)} suffix={stats.avg14prev==null?"":"kg"} />
+                <Statistic title="Δ14d" value={stats.delta14==null ? "—" : round(stats.delta14,2)} suffix={stats.delta14==null?"":"kg"} />
+                <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                  <Text>结论：<Tag color={stats.verdict.color}>{stats.verdict.text}</Tag></Text>
+                  <Text>可信度：<Tag color={stats.conf.color}>{stats.conf.text}</Tag></Text>
+                </div>
+              </Space>
+              <div style={{marginTop:12}}>
+                <canvas ref={canvasRef}></canvas>
+              </div>
+              <Divider />
+              <Text type="secondary">规则：至少满 14 天再下结论；每 14 天最多改一个旋钮。</Text>
+            </Card>
+          </Space>
+        );
+      }
+
+      function HistoryPage(){
+        const rows = Object.keys(store.daily).sort().reverse().slice(0, 90).map(d=>{
+          const e = store.daily[d] || {};
+          return {
+            key:d,
+            date:d,
+            weight: Number.isFinite(e.weight_kg) ? e.weight_kg : null,
+            sleep: Number.isFinite(e.sleep_hours) ? e.sleep_hours : null,
+            rec: Number.isFinite(e.recovery_score) ? e.recovery_score : null,
+            trained: !!e.trained,
+            knobs: Array.isArray(e.knobs) ? e.knobs : [],
+          };
+        });
+
+        const columns = [
+          {title:"日期", dataIndex:"date", width:120},
+          {title:"晨重", dataIndex:"weight", width:100, render:v=>v==null?"—":`${v}kg`},
+          {title:"睡眠", dataIndex:"sleep", width:90, render:v=>v==null?"—":`${v}h`},
+          {title:"恢复", dataIndex:"rec", width:80, render:v=>v==null?"—":`${v}/5`},
+          {title:"训练", dataIndex:"trained", width:80, render:v=> v ? <Tag color="green">是</Tag> : <Tag>否</Tag>},
+          {title:"旋钮", dataIndex:"knobs", render:(arr)=>(
+            arr?.length ? arr.slice(0,3).map(x=><Tag key={x}>{x}</Tag>) : "—"
+          )},
+          {title:"编辑", dataIndex:"date", width:90, render:(d)=>(
+            <Button size="small" onClick={()=>{ setActiveDate(d); location.hash="#/today"; }}>编辑</Button>
+          )}
+        ];
+
+        return (
+          <Space direction="vertical" size={14} style={{width:"100%"}}>
+            <Card title={<b>历史（日记录）</b>} className="glass">
+              <Table
+                columns={columns}
+                dataSource={rows}
+                pagination={{pageSize:10}}
+                size="small"
+                scroll={{ x: "max-content" }}
+              />
+              <Divider />
+              <Space wrap>
+                <Button onClick={exportJSON}>导出 JSON</Button>
+                <Button>
+                  <label style={{cursor:"pointer"}}>
+                    导入 JSON
+                    <input type="file" accept="application/json" style={{display:"none"}}
+                      onChange={e=>{ if(e.target.files?.[0]) importJSON(e.target.files[0]); e.target.value=""; }} />
+                  </label>
+                </Button>
+                <Button danger onClick={()=>{
+                  if(confirm("清空所有数据？此操作不可撤销。")){
+                    localStorage.removeItem(LS_KEY);
+                    const fresh = {phase:"cut", daily:{}, workouts:[], sentinels:{primary:"bench", secondary:"incline"}};
+                    setStore(fresh); saveStore(fresh);
+                    message.success("已清空");
+                  }
+                }}>清空数据</Button>
+              </Space>
+            </Card>
+          </Space>
+        );
+      }
+
+      function SettingsPage(){
+        return (
+          <Space direction="vertical" size={14} style={{width:"100%"}}>
+            <Card title={<b>设置</b>} className="glass">
+              <Space wrap size={18} align="start">
+                <div style={{minWidth:280}}>
+                  <Text>阶段（影响速度阈值）</Text>
+                  <div style={{marginTop:8}}>
+                    <Select
+                      value={store.phase}
+                      style={{width:"100%"}}
+                      options={[
+                        {value:"cut", label:"减脂"},
+                        {value:"bulk", label:"增肌"},
+                        {value:"maintain", label:"维持"},
+                      ]}
+                      onChange={(p)=>persist({...store, phase:p})}
+                    />
+                  </div>
+                </div>
+                <div style={{minWidth:280}}>
+                  <Text>哨兵动作（默认）</Text>
+                  <div style={{marginTop:8}}>
+                    <Space direction="vertical" style={{width:"100%"}}>
+                      <Select
+                        value={store.sentinels.primary}
+                        options={[
+                          {value:"bench", label:"卧推"},
+                          {value:"squat", label:"深蹲"},
+                          {value:"deadlift", label:"硬拉"},
+                          {value:"row", label:"划船"},
+                        ]}
+                        onChange={(v)=>persist({...store, sentinels:{...store.sentinels, primary:v}})}
+                      />
+                      <Select
+                        value={store.sentinels.secondary}
+                        options={[
+                          {value:"incline", label:"上斜推"},
+                          {value:"fly", label:"飞鸟/夹胸"},
+                          {value:"lateral", label:"侧平举"},
+                          {value:"curl", label:"弯举"},
+                        ]}
+                        onChange={(v)=>persist({...store, sentinels:{...store.sentinels, secondary:v}})}
+                      />
+                    </Space>
+                  </div>
+                </div>
+              </Space>
+              <Divider />
+              <Text type="secondary">移动端：左上角菜单按钮打开侧栏，点击遮罩关闭。</Text>
+            </Card>
+          </Space>
+        );
+      }
+
+      const items = [
+        {key:"today", label:"今天"},
+        {key:"trends", label:"趋势"},
+        {key:"workouts", label:"训练"},
+        {key:"history", label:"历史"},
+        {key:"settings", label:"设置"},
+      ];
+
+      const renderPage = ()=>{
+        if(route==="today") return <TodayPage/>;
+        if(route==="trends") return <TrendsPage/>;
+        if(route==="workouts") return <WorkoutsPage/>;
+        if(route==="history") return <HistoryPage/>;
+        return <SettingsPage/>;
+      };
+
+      const routeTitle = route==="today"?"今天":route==="trends"?"趋势":route==="workouts"?"训练":route==="history"?"历史":"设置";
+      const routeSub = route==="today"?"最短路径记录：晨重 + 旋钮 +（可选）睡眠/恢复"
+        :route==="trends"?"均值与速度判定，降低噪声折磨"
+        :route==="workouts"?"哨兵动作：总次数/吨位/掉幅"
+        :route==="history"?"按日期回看与编辑"
+        :"阶段/哨兵/备份";
+
+      return (
+        <Layout style={{minHeight:"100vh", background:"transparent"}}>
+          {isMobile && !mobileCollapsed && (
+            <div className="backdrop" onClick={()=>setMobileCollapsed(true)} />
+          )}
+
+          <Sider
+            width={260}
+            breakpoint="lg"
+            collapsedWidth={0}
+            collapsible
+            trigger={null}
+            collapsed={isMobile ? mobileCollapsed : false}
+            style={{paddingTop:14}}
+          >
+            <div style={{padding:"10px 14px 12px"}}>
+              <Title level={4} style={{margin:"0 0 6px", fontWeight:900}}>增肌/减脂追踪</Title>
+              <Space wrap>
+                <Tag color={stats.verdict.color}>{stats.verdict.text}</Tag>
+                <Tag color={stats.conf.color}>可信度：{stats.conf.text}</Tag>
+              </Space>
+              <div style={{marginTop:10, color:"rgba(15,23,42,.70)", fontSize:12}}>
+                7日均重：<span className="mono">{stats.avg7==null?"—":round(stats.avg7,2)+"kg"}</span>
+                {" · "}
+                两周速度：<span className="mono">{stats.weeklyRate==null?"—":round(stats.weeklyRate,2)+"kg/周"}</span>
+              </div>
+            </div>
+
+            <Menu
+              mode="inline"
+              selectedKeys={[route]}
+              items={items}
+              onClick={(e)=>{
+                location.hash = "#/"+e.key;
+                if(isMobile) setMobileCollapsed(true);
+              }}
+              style={{padding:"0 8px"}}
+            />
+          </Sider>
+
+          <Layout style={{background:"transparent"}}>
+            <Content style={{padding:"18px", maxWidth:1180, margin:"0 auto", width:"100%"}}>
+              {isMobile && (
+                <div className="mobileTopbar">
+                  <Button type="text" className="mobileMenuBtn" onClick={()=>setMobileCollapsed(false)}>☰</Button>
+                  <div className="mobileTitle">{routeTitle}</div>
+                </div>
+              )}
+
+              <div className="pageHeader">
+                <div>
+                  <h1>{routeTitle}</h1>
+                  <div className="sub">{routeSub}</div>
+                </div>
+                <Space wrap>
+                  <Tag color="blue">阶段：{store.phase==="cut"?"减脂":store.phase==="bulk"?"增肌":"维持"}</Tag>
+                  <Tag>{todayISO()}</Tag>
+                </Space>
+              </div>
+
+              {renderPage()}
+            </Content>
+          </Layout>
+
+          {/* Global Drawer for adding workouts */}
+          <Drawer
+            title="快速添加训练（哨兵动作）"
+            open={drawerOpen}
+            onClose={()=>setDrawerOpen(false)}
+            width={Math.min(880, window.innerWidth-24)}
+            extra={<Button type="primary" onClick={addWorkout}>添加</Button>}
+            destroyOnClose
+          >
+            <Form form={wForm} layout="vertical">
+              <Form.Item label="日期" name="date" rules={[{required:true}]}>
+                <DatePicker style={{width:"100%"}} allowClear={false} />
+              </Form.Item>
+              <Form.Item label="动作" name="ex" rules={[{required:true}]}>
+                <Select options={Object.entries(EXERCISES).map(([k,v])=>({value:k,label:v}))} />
+              </Form.Item>
+              <Form.Item label="重量（kg）" name="weight" rules={[{required:true, message:"请输入重量"}]}>
+                <InputNumber style={{width:"100%"}} min={0} max={500} step={0.5} placeholder="例如 75" />
+              </Form.Item>
+              <Form.Item label="次数序列" name="reps" rules={[{required:true, message:"例如 10/9/8/8"}]}>
+                <Input placeholder="例如 10/9/8/8 或 12,12,11" />
+              </Form.Item>
+              <Space wrap style={{width:"100%"}}>
+                <Form.Item label="RIR（可选）" name="rir" style={{minWidth:220}}>
+                  <InputNumber style={{width:"100%"}} min={0} max={6} step={1} />
+                </Form.Item>
+                <Form.Item label="休息（分钟，可选）" name="rest" style={{minWidth:220}}>
+                  <InputNumber style={{width:"100%"}} min={0} max={10} step={0.5} />
+                </Form.Item>
+              </Space>
+            </Form>
+          </Drawer>
+        </Layout>
+      );
+    }
+
+    const lightTheme = {
+      algorithm: theme.defaultAlgorithm,
+      token: {
+        colorPrimary: "#1677ff",
+        borderRadius: 14,
+        fontSize: 14,
+        fontFamily: `system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC","Noto Sans CJK SC","Microsoft YaHei"`,
+      }
+    };
+
+    ReactDOM.createRoot(document.getElementById("root")).render(
+      <ConfigProvider theme={lightTheme}>
+        <App/>
+      </ConfigProvider>
+    );
+  </script>
+</body>
+</html>
