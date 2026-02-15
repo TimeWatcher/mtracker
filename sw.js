@@ -1,38 +1,36 @@
-/* Simple cache-first SW for offline PWA */
-const CACHE_NAME = "fit-pwa-v1";
+const CACHE_NAME = "fit-pwa-v2";
 const PRECACHE = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./sw.js",
-  "https://unpkg.com/react@18/umd/react.production.min.js",
-  "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js",
-  "https://unpkg.com/@babel/standalone@7.25.6/babel.min.js",
-  "https://cdn.jsdelivr.net/npm/antd@5.18.3/dist/reset.css",
-  "https://cdn.jsdelivr.net/npm/antd@5.18.3/dist/antd.min.css",
-  "https://cdn.jsdelivr.net/npm/antd@5.18.3/dist/antd.min.js",
-  "https://cdn.jsdelivr.net/npm/dayjs@1.11.11/dayjs.min.js"
-
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve())))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : null))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  // Ignore non-GET
   if (req.method !== "GET") return;
+
+  const url = new URL(req.url);
+
+  // 只处理同源请求；CDN/第三方全部放行，避免 CORS/opaque 影响
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
     caches.match(req).then((cached) => {
